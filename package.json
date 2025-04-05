@@ -15,6 +15,7 @@
     "@aws-sdk/credential-providers": "^3.782.0",
     "@aws-sdk/lib-dynamodb": "^3.782.0",
     "dotenv": "^16.4.7",
+    "prettier": "^3.5.3",
     "serverless-export-env": "^2.2.0"
   },
   "dependencies": {
