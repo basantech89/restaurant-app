@@ -7,6 +7,7 @@ const restaurantsApiRoot = process.env.restaurants_api
 const cognitoUserPoolId = process.env.cognito_user_pool_id
 const cognitoClientId = process.env.cognito_client_id
 const awsRegion = process.env.AWS_REGION
+
 const days = [
   'Sunday',
   'Monday',
@@ -51,7 +52,7 @@ export const handler = async (event, context) => {
   const response = {
     statusCode: 200,
     headers: {
-      'Content-Type': 'text/html; charset=UTF-8'
+      'content-type': 'text/html; charset=UTF-8'
     },
     body: html
   }
