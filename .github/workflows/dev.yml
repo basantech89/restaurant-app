@@ -19,10 +19,17 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile, --strict-peer-dependencies]
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -30,14 +37,11 @@ jobs:
           role-to-assume: arn:aws:iam::905418325292:role/GithubActionsRole
           role-session-name: GithubActionsSession
 
-      - name: npm ci
-        run: npm ci
-
       - name: run integration test
-        run: npm run test
+        run: pnpm run test
 
       - name: deploy to dev
-        run: npx sls deploy
+        run: pnpm run deploy
 
       - name: run end-to-end tests
-        run: npm run test:e2e
+        run: pnpm run test:e2e

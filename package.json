@@ -6,12 +6,13 @@
   "scripts": {
     "dotEnv": "sls export-env --all",
     "test": "pnpm run dotEnv && cross-env TEST_MODE=handler vitest",
-    "test:e2e": "npm run dotEnv && cross-env TEST_MODE=http vitest"
+    "test:e2e": "npm run dotEnv && cross-env TEST_MODE=http vitest",
+    "deploy": "sls deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.5.2",
+  "packageManager": "pnpm@10.8.0",
   "devDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.782.0",
     "@aws-sdk/client-dynamodb": "^3.782.0",
@@ -21,6 +22,7 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.7",
     "prettier": "^3.5.3",
+    "serverless": "^4.12.0",
     "serverless-export-env": "^2.2.0",
     "vitest": "^3.1.1"
   },
