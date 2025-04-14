@@ -14,10 +14,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.8.0",
   "devDependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.782.0",
-    "@aws-sdk/client-dynamodb": "^3.782.0",
-    "@aws-sdk/credential-providers": "^3.782.0",
-    "@aws-sdk/lib-dynamodb": "^3.782.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.787.0",
+    "@aws-sdk/client-dynamodb": "^3.787.0",
+    "@aws-sdk/client-ssm": "^3.787.0",
+    "@aws-sdk/credential-providers": "^3.787.0",
+    "@aws-sdk/lib-dynamodb": "^3.787.0",
     "cheerio": "^1.0.0",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.7",
@@ -27,6 +28,8 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
+    "@middy/core": "^6.1.6",
+    "@middy/ssm": "^6.1.6",
     "aws4fetch": "^1.0.20",
     "chance": "^1.1.12",
     "lodash": "^4.17.21",
