@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import * as when from '../steps/when.mjs'
-import * as teardown from '../steps/teardown.mjs'
-import * as given from '../steps/given.mjs'
+import * as when from '../steps/when'
+import * as teardown from '../steps/teardown'
+import * as given from '../steps/given'
 
 describe('Given an authenticated user', () => {
   let user

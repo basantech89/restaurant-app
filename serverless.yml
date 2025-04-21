@@ -19,12 +19,22 @@ provider:
         - Effect: Allow
           Action: ssm:GetParameters*
           Resource:
-            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
-            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
+            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${param:ssmStage,
+              sls:stage}/get-restaurants/config
+            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${param:ssmStage,
+              sls:stage}/search-restaurants/config
+        - Effect: Allow
+          Action: events:PutEvents
+          Resource: !GetAtt EventBus.Arn
+        - Effect: Allow
+          Action: sns:Publish
+          Resource: !Ref RestaurantNotificationTopic
+
   environment:
     rest_api_url: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}
     serviceName: ${self:service}
     stage: ${sls:stage}
+    ssmStage: ${param:ssmStage, sls:stage}
 
 functions:
   get-index:
@@ -38,6 +48,7 @@ functions:
       cognito_user_pool_id: !Ref CognitoUserPool
       cognito_client_id: !Ref WebCognitoUserPoolClient
       cognito_server_client_id: !Ref ServerCognitoUserPoolClient
+      orders_api: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}/orders
 
   get-restaurants:
     handler: functions/get-restaurants.handler
@@ -61,6 +72,33 @@ functions:
             arn: !GetAtt CognitoUserPool.Arn
     environment:
       restaurants_table: !Ref RestaurantsTable
+
+  place-order:
+    handler: functions/place-order.handler
+    events:
+      - http:
+          path: /orders
+          method: post
+          authorizer:
+            name: CognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+    environment:
+      bus_name: !Ref EventBus
+
+  notify-restaurant:
+    handler: functions/notify-restaurant.handler
+    events:
+      - eventBridge:
+          eventBus: !Ref EventBus
+          pattern:
+            source:
+              - big-mouth
+            detail-type:
+              - order_placed
+    environment:
+      bus_name: !Ref EventBus
+      restaurant_notification_topic: !Ref RestaurantNotificationTopic
 
 resources:
   Resources:
@@ -132,6 +170,26 @@ resources:
           - ALLOW_REFRESH_TOKEN_AUTH
         PreventUserExistenceErrors: ENABLED
 
+    ServiceUrlParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Type: String
+        Name: /${self:service}/${sls:stage}/serviceUrl
+        Value:
+          Fn::Join:
+            - ''
+            - - https://
+              - !Ref ApiGatewayRestApi
+              - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
+
+    EventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: ${self:service}_${sls:stage}_order_events
+
+    RestaurantNotificationTopic:
+      Type: AWS::SNS::Topic
+
   Outputs:
     RestaurantsTableName:
       Value: !Ref RestaurantsTable
@@ -147,6 +205,15 @@ resources:
 
     CognitoUserPoolServerClientId:
       Value: !Ref ServerCognitoUserPoolClient
+
+    EventBusName:
+      Value: !Ref EventBus
+
+    RestaurantNotificationTopicName:
+      Value: !GetAtt RestaurantNotificationTopic.TopicName
+
+    RestaurantNotificationTopicArn:
+      Value: !Ref RestaurantNotificationTopic
 
 plugins:
   - serverless-export-env

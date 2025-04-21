@@ -1,4 +1,4 @@
-import * as when from '../steps/when.mjs'
+import * as when from '../steps/when'
 import { describe, it, expect } from 'vitest'
 import { load } from 'cheerio'
 

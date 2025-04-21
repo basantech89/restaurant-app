@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dotEnv": "sls export-env --all",
-    "test": "pnpm run dotEnv && cross-env TEST_MODE=handler vitest",
+    "test": "npm run dotEnv && cross-env TEST_MODE=handler vitest",
     "test:e2e": "npm run dotEnv && cross-env TEST_MODE=http vitest",
     "deploy": "sls deploy"
   },
@@ -16,6 +16,8 @@
   "devDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.787.0",
     "@aws-sdk/client-dynamodb": "^3.787.0",
+    "@aws-sdk/client-eventbridge": "^3.787.0",
+    "@aws-sdk/client-sns": "^3.787.0",
     "@aws-sdk/client-ssm": "^3.787.0",
     "@aws-sdk/credential-providers": "^3.787.0",
     "@aws-sdk/lib-dynamodb": "^3.787.0",

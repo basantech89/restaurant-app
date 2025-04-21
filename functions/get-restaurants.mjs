@@ -3,8 +3,8 @@ import ssm from '@middy/ssm'
 import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb'
 
-import packageJson from '@aws-sdk/client-s3/package.json' with { type: 'json' }
-console.log('---------------- version', packageJson.version)
+// import packageJson from '@aws-sdk/client-s3/package.json' with { type: 'json' }
+// console.log('---------------- version', packageJson.version)
 
 const dynamodbClient = new DynamoDB()
 const dynamodb = DynamoDBDocumentClient.from(dynamodbClient)
@@ -24,7 +24,7 @@ const getRestaurants = async count => {
   return resp.Items
 }
 
-const { serviceName, stage } = process.env
+const { serviceName, ssmStage } = process.env
 
 export const handler = middy()
   .use(
@@ -33,7 +33,7 @@ export const handler = middy()
       cacheExpiry: 1 * 60 * 1000, // 1 mins
       setToContext: true,
       fetchData: {
-        config: `/${serviceName}/${stage}/get-restaurants/config`
+        config: `/${serviceName}/${ssmStage}/get-restaurants/config`
       }
     })
   )
