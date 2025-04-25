@@ -1,10 +1,30 @@
 import _ from 'lodash'
 import { AwsClient } from 'aws4fetch'
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
+import {
+  EventBridgeClient,
+  PutEventsCommand
+} from '@aws-sdk/client-eventbridge'
 
 const mode = process.env.TEST_MODE
 
 const APP_ROOT = '../../'
+
+const viaEventBridge = async (busName, source, detailType, detail) => {
+  const eventBridge = new EventBridgeClient()
+  const putEventsCmd = new PutEventsCommand({
+    Entries: [
+      {
+        Source: source,
+        DetailType: detailType,
+        Detail: JSON.stringify(detail),
+        EventBusName: busName
+      }
+    ]
+  })
+
+  await eventBridge.send(putEventsCmd)
+}
 
 const viaHttp = async (relPath, method, opts) => {
   const url = `${process.env.rest_api_url}/${relPath}`
@@ -64,7 +84,7 @@ const viaHandler = async (event, functionName) => {
   if (_.get(response, 'body') && contentType === 'application/json') {
     response.body = JSON.parse(response.body)
   }
-  
+
   return response
 }
 
@@ -118,10 +138,16 @@ export const we_invoke_place_order = async (user, restaurantName) => {
   }
 }
 
-export const we_invoke_notify_restaurant = async (event) => {
+export const we_invoke_notify_restaurant = async event => {
   if (mode === 'handler') {
     await viaHandler(event, 'notify-restaurant')
   } else {
-    throw new Error('not supported')
+    const busName = process.env.bus_name
+    await viaEventBridge(
+      busName,
+      event.source,
+      event['detail-type'],
+      event.detail
+    )
   }
 }
