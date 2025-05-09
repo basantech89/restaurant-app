@@ -29,6 +29,13 @@ provider:
         - Effect: Allow
           Action: sns:Publish
           Resource: !Ref RestaurantNotificationTopic
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: !GetAtt IdempotencyTable.Arn
 
   environment:
     rest_api_url: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}
@@ -98,6 +105,11 @@ functions:
     environment:
       bus_name: !Ref EventBus
       restaurant_notification_topic: !Ref RestaurantNotificationTopic
+      idempotency_table: !Ref IdempotencyTable
+    destinations:
+      onFailure:
+        type: sqs
+        arn: !GetAtt OnFailureQueue.Arn
 
 resources:
   Resources:
@@ -255,6 +267,73 @@ resources:
                   },
                   "eventBusName": "${EventBus}"
                 }
+
+    IdempotencyTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: expiration
+
+    OnFailureQueue:
+      Type: AWS::SQS::Queue
+
+    AlarmTopic:
+      Type: AWS::SNS::Topic
+
+    AlarmTopicSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: basantech89@gmail.com
+        Protocol: email
+        TopicArn: !Ref AlarmTopic
+
+    OnFailureQueueAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName:
+          '[${sls:stage}] [NotifyRestaurant function] Failed events detected in
+          OnFailure destination'
+        MetricName: ApproximateNumberOfMessagesVisible
+        Namespace: AWS/SQS
+        Statistic: Maximum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        Dimensions:
+          - Name: QueueName
+            Value: !GetAtt OnFailureQueue.QueueName
+        AlarmActions:
+          - !Ref AlarmTopic
+
+    DestinationDeliveryFailuresAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName:
+          '[${sls:stage}] [NotifyRestaurant function] Failed to deliver failed
+          events to OnFailure destination'
+        MetricName: DestinationDeliveryFailures
+        Namespace: AWS/Lambda
+        Statistic: Average
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        Dimensions:
+          - Name: FunctionName
+            Value: !Ref NotifyDashrestaurantLambdaFunction
+        AlarmActions:
+          - !Ref AlarmTopic
 
   Conditions:
     IsE2eTest: # We will use this IsE2eTest condition to conditionally deploy infrastructure resources for environments where we'll need to run end-to-end tests (which for now, is just the dev stage).

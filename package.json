@@ -34,6 +34,7 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
+    "@aws-lambda-powertools/idempotency": "^2.19.1",
     "@middy/core": "^6.1.6",
     "@middy/ssm": "^6.1.6",
     "aws4fetch": "^1.0.20",
